@@ -7,7 +7,7 @@
   <img src="https://img.shields.io/badge/GUI-PySide6-orange.svg" alt="GUI Framework">
 </div>
 
-A modern GUI application for managing Wine prefixes and Proton-GE installations on Linux. Features a sleek dark thttps://github.com/ZeloteZ/wine-managerheme interface with comprehensive Wine prefix management, automated Proton-GE downloads, and an intuitive favorites system.
+A modern GUI application for managing Wine prefixes and Proton-GE installations on Linux. Features a sleek dark theme interface with comprehensive Wine prefix management, automated Proton-GE downloads, and an intuitive favorites system.
 Start your .exe files the way ___you___ want!
 
 ![image](https://github.com/user-attachments/assets/0448736e-712b-4785-ab54-20f20f94e1ec)
