@@ -113,6 +113,8 @@ python3 wine_manager.py
 
 ## ⚙️ Configuration
 
+While there is no need to manually (not with the GUI) configure anything, there still is the option to do so.
+This may help in error situations.
 The application stores its configuration in `~/.config/wine-manager/settings.json`:
 
 ```json
