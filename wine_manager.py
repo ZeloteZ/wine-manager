@@ -406,21 +406,44 @@ def discover_prefixes() -> List[str]:
     # Search each root directory for valid prefixes
     for r in roots:
         if not r.exists(): 
+            LOG_MANAGER.add_log("DEBUG", f"Root directory does not exist: {r}", "PrefixDiscovery")
             continue
             
-        for c in r.iterdir():
-            # Check for system.reg (Wine prefix marker)
-            if (c/"system.reg").exists():
-                prefixes.add(str(c))
-            # Check for nested prefix structure (some tools use this)
-            elif (c/"prefix"/"system.reg").exists():
-                prefixes.add(str(c/"prefix"))
+        LOG_MANAGER.add_log("DEBUG", f"Scanning root directory: {r}", "PrefixDiscovery")
+        
+        # Check if the root directory itself is a prefix
+        if (r/"system.reg").exists():
+            prefixes.add(str(r))
+            LOG_MANAGER.add_log("DEBUG", f"Found prefix (root): {r}", "PrefixDiscovery")
+        
+        # Check subdirectories for prefixes
+        try:
+            for c in r.iterdir():
+                if not c.is_dir():
+                    continue
+                    
+                # Check for system.reg (Wine prefix marker)
+                if (c/"system.reg").exists():
+                    prefixes.add(str(c))
+                    LOG_MANAGER.add_log("DEBUG", f"Found prefix: {c}", "PrefixDiscovery")
+                # Check for nested prefix structure (some tools use this)
+                elif (c/"prefix"/"system.reg").exists():
+                    prefixes.add(str(c/"prefix"))
+                    LOG_MANAGER.add_log("DEBUG", f"Found nested prefix: {c}/prefix", "PrefixDiscovery")
+        except PermissionError:
+            LOG_MANAGER.add_log("WARNING", f"Permission denied scanning: {r}", "PrefixDiscovery")
+        except Exception as e:
+            LOG_MANAGER.add_log("WARNING", f"Error scanning {r}: {e}", "PrefixDiscovery")
     
     # Ensure default Wine prefix is included if it exists
-    if (home/".wine").exists():
+    if (home/".wine").exists() and (home/".wine"/"system.reg").exists():
         prefixes.add(str(home/".wine"))
+        LOG_MANAGER.add_log("DEBUG", f"Added default Wine prefix: {home}/.wine", "PrefixDiscovery")
     
-    return sorted(prefixes)
+    result = sorted(prefixes)
+    LOG_MANAGER.add_log("INFO", f"Total prefixes discovered: {len(result)}", "PrefixDiscovery")
+    
+    return result
 
 class ProgramScanner(QObject):
     """
@@ -784,12 +807,43 @@ class WineManager(QMainWindow):
 
     def add_prefix_dir(self):
         """Add a new directory to search for Wine prefixes."""
-        directory = QFileDialog.getExistingDirectory(self, "Select Wine Prefix Directory")
-        if directory and directory not in CFG["extra_prefix_dirs"]:
-            CFG["extra_prefix_dirs"].append(directory)
-            save_cfg(CFG)
-            QMessageBox.information(self, "✅ Added", f"Added directory:\n{directory}")
+        global CFG  # Declare global at the beginning of the function
+        
+        directory = QFileDialog.getExistingDirectory(self, "Select Directory to Search for Wine Prefixes")
+        if not directory:
+            return
+            
+        # Check if directory is already in the search list
+        if directory in CFG["extra_prefix_dirs"]:
+            QMessageBox.information(self, "ℹ️ Already Added", f"Directory is already in search list:\n{directory}")
+            # Still refresh the prefix list in case new prefixes were added to this directory
             self.load_prefixes()
+            return
+            
+        # Count how many prefixes were found before adding this directory
+        old_prefixes = set(discover_prefixes())
+        
+        # Add directory to search paths and update global config
+        CFG["extra_prefix_dirs"].append(directory)
+        save_cfg(CFG)
+        
+        # Reload global configuration to ensure discover_prefixes uses updated config
+        CFG = load_cfg()
+        
+        # Count how many prefixes are found after adding the directory
+        new_prefixes = set(discover_prefixes())
+        found_count = len(new_prefixes) - len(old_prefixes)
+        
+        LOG_MANAGER.add_log("INFO", f"Added search directory: {directory} (found {found_count} new prefixes)", "PrefixManager")
+        
+        if found_count > 0:
+            QMessageBox.information(self, "✅ Directory Added", 
+                f"Added search directory:\n{directory}\n\nFound {found_count} new Wine prefix(es).")
+        else:
+            QMessageBox.information(self, "✅ Directory Added", 
+                f"Added search directory:\n{directory}\n\nNo Wine prefixes found in this directory.")
+        
+        self.load_prefixes()
 
     def show_proton_manager(self):
         """Open the Proton version management dialog."""
@@ -1467,7 +1521,157 @@ class LogsDialog(QDialog):
             self.logs_text.clear()
             self.stats_label.setText("📊 0 log entries")
     
-    def copy_logs(self):
+    def copy_logs(self):#!/usr/bin/env python3
+"""
+Wine Manager
+
+A modern GUI application for managing Wine prefixes and Proton-GE installations.
+
+Features:
+- Automatic Wine prefix discovery and management
+- Proton-GE version management with automated downloads
+- Dark theme interface optimized for productivity
+- Favorites system for quick application access
+- Cross-runtime support (Wine/Proton-GE)
+- Application browser with system file filtering
+
+Author: ZeloteZ
+License: MIT
+"""
+# Standard library imports
+import sys, os, threading, pathlib, tempfile, tarfile, shutil, json, subprocess
+from datetime import datetime
+from dataclasses import dataclass
+from typing import List, Optional
+
+# Third-party imports
+import requests
+from PySide6.QtWidgets import *
+from PySide6.QtCore import Qt, Signal, QObject, QTimer
+from PySide6.QtGui import QFont, QAction, QTextCursor
+
+# ================================================================================
+# Configuration Management
+# ================================================================================
+
+# Application configuration paths
+CONFIG_DIR = pathlib.Path.home() / ".config" / "wine-manager"
+CONFIG_FILE = CONFIG_DIR / "settings.json"
+
+# Default configuration template#!/usr/bin/env python3
+"""
+Wine Manager
+
+A modern GUI application for managing Wine prefixes and Proton-GE installations.
+
+Features:
+- Automatic Wine prefix discovery and management
+- Proton-GE version management with automated downloads
+- Dark theme interface optimized for productivity
+- Favorites system for quick application access
+- Cross-runtime support (Wine/Proton-GE)
+- Application browser with system file filtering
+
+Author: ZeloteZ
+License: MIT
+"""
+# Standard library imports
+import sys, os, threading, pathlib, tempfile, tarfile, shutil, json, subprocess
+from datetime import datetime
+from dataclasses import dataclass
+from typing import List, Optional
+
+# Third-party imports
+import requests
+from PySide6.QtWidgets import *
+from PySide6.QtCore import Qt, Signal, QObject, QTimer
+from PySide6.QtGui import QFont, QAction, QTextCursor
+
+# ================================================================================
+# Configuration Management
+# ================================================================================
+
+# Application configuration paths
+CONFIG_DIR = pathlib.Path.home() / ".config" / "wine-manager"
+CONFIG_FILE = CONFIG_DIR / "settings.json"
+
+# Default configuration template
+DEFAULT_CFG = {
+    "proton_dir": "~/.local/share/proton-builds",  # Proton installation directory
+    "default_proton": "",                          # Default Proton version
+    "prefix_proton_map": {},                       # Prefix -> Proton version mapping
+    "extra_prefix_dirs": [],                       # Additional prefix search directories
+    "prefix_favorites": {}                         # Prefix -> favorite apps mapping
+}
+
+def load_cfg() -> dict:
+    """
+    Load application configuration from file.
+    Creates default config if file doesn't exist.
+    
+    Returns:
+        dict: Configuration dictionary with expanded paths
+    """
+    if not CONFIG_FILE.exists():
+        CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+        CONFIG_FILE.write_text(json.dumps(DEFAULT_CFG, indent=2))
+    
+    data = json.loads(CONFIG_FILE.read_text()) if CONFIG_FILE.exists() else {}
+    cfg = DEFAULT_CFG.copy()
+    cfg.update(data)
+    
+    # Expand user paths
+    cfg["proton_dir"] = str(pathlib.Path(os.path.expanduser(cfg["proton_dir"])))
+    cfg["extra_prefix_dirs"] = [str(pathlib.Path(os.path.expanduser(p))) for p in cfg.get("extra_prefix_dirs", [])]
+    cfg["prefix_favorites"] = {k: list(v) for k, v in cfg.get("prefix_favorites", {}).items()}
+    
+    return cfg
+
+def save_cfg(cfg: dict):
+    """
+    Save configuration to file.
+    
+    Args:
+        cfg: Configuration dictionary to save
+
+DEFAULT_CFG = {
+    "proton_dir": "~/.local/share/proton-builds",  # Proton installation directory
+    "default_proton": "",                          # Default Proton version
+    "prefix_proton_map": {},                       # Prefix -> Proton version mapping
+    "extra_prefix_dirs": [],                       # Additional prefix search directories
+    "prefix_favorites": {}                         # Prefix -> favorite apps mapping
+}
+
+def load_cfg() -> dict:
+    """
+    Load application configuration from file.
+    Creates default config if file doesn't exist.
+    
+    Returns:
+        dict: Configuration dictionary with expanded paths
+    """
+    if not CONFIG_FILE.exists():
+        CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+        CONFIG_FILE.write_text(json.dumps(DEFAULT_CFG, indent=2))
+    
+    data = json.loads(CONFIG_FILE.read_text()) if CONFIG_FILE.exists() else {}
+    cfg = DEFAULT_CFG.copy()
+    cfg.update(data)
+    
+    # Expand user paths
+    cfg["proton_dir"] = str(pathlib.Path(os.path.expanduser(cfg["proton_dir"])))
+    cfg["extra_prefix_dirs"] = [str(pathlib.Path(os.path.expanduser(p))) for p in cfg.get("extra_prefix_dirs", [])]
+    cfg["prefix_favorites"] = {k: list(v) for k, v in cfg.get("prefix_favorites", {}).items()}
+    
+    return cfg
+
+def save_cfg(cfg: dict):
+    """
+    Save configuration to file.
+    
+    Args:
+        cfg: Configuration dictionary to save
+
         """Copy all visible logs to clipboard."""
         clipboard = QApplication.clipboard()
         clipboard.setText(self.logs_text.toPlainText())
