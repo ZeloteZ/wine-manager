@@ -219,9 +219,7 @@ SOFTWARE.
 
 ## 📊 Project Status
 
-- ✅ **Stable**: Core functionality is stable and tested
-- 🔄 **Active Development**: Regular updates and improvements
-  
+- ✅ **Stable**: Core functionality is stable and tested  
 
 ## 🔗 Related Projects
 
