@@ -4,6 +4,9 @@ Wine Manager is a Linux desktop app for launching and organizing Windows applica
 
 The current version is a redesigned PySide6 application with a compact library view, Proton management, Gamescope launch profiles, custom artwork, favorites, and built-in logs.
 
+> [!NOTE]
+> Wine Manager is mostly vibe-coded and may be unstable.
+
 ## Features
 
 - Unified app library across discovered Wine and Bottles prefixes
