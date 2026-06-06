@@ -26,13 +26,13 @@ The current version is a redesigned PySide6 application with a compact library v
 
 ![alt text](https://zelotez.cloud/img/eb12ada10c5416b5.png?viewer=0 "Wine Manager - Launch Exe")
 
-## umu-launcher` (provides `umu-run`) for Proton-GE launches; install it from your distribution or https://github.com/Open-Wine-Components/umu-launcher
-- `Requirements
+## Requirements
 
 - Linux
 - Python 3.10 or newer
 - Wine available as `wine` for system Wine launches
 - `pip` and `venv` for the recommended local install
+- `umu-launcher` (provides `umu-run`) [Open-Wine-Components/umu-launcher](https://github.com/Open-Wine-Components/umu-launcher)
 - Optional: `gamescope` for Gamescope-enabled launches
 - Optional: network access for Proton-GE downloads and artwork suggestions
 
