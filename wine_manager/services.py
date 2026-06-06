@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import hashlib
 import pathlib
 import shlex
 import shutil
@@ -125,6 +126,8 @@ def _default_config() -> dict:
     return {
         "proton_dir": str(pathlib.Path.home() / ".local/share/proton-builds"),
         "default_proton": "",
+        "proton_launch_backend": "umu",
+        "umu_executable": "umu-run",
         "gamescope_defaults": _normalize_gamescope_settings({}),
         "prefix_proton_map": {},
         "prefix_gamescope_map": {},
@@ -205,6 +208,8 @@ class ConfigStore:
         config = _default_config()
         config.update(raw)
         config["proton_dir"] = str(pathlib.Path(os.path.expanduser(config["proton_dir"])))
+        config["proton_launch_backend"] = "direct" if str(config.get("proton_launch_backend", "umu")).strip().lower() == "direct" else "umu"
+        config["umu_executable"] = str(config.get("umu_executable") or "umu-run").strip() or "umu-run"
         config["gamescope_defaults"] = _normalize_gamescope_settings(config.get("gamescope_defaults", {}))
         config["extra_prefix_dirs"] = [
             str(pathlib.Path(os.path.expanduser(path))) for path in config.get("extra_prefix_dirs", [])
@@ -263,6 +268,18 @@ class ConfigStore:
     def set_default_runtime(self, runtime_tag: str) -> None:
         self.data["default_proton"] = runtime_tag
         self.save()
+
+    @property
+    def proton_launch_backend(self) -> str:
+        return "direct" if str(self.data.get("proton_launch_backend", "umu")).strip().lower() == "direct" else "umu"
+
+    def set_proton_launch_backend(self, backend: str) -> None:
+        self.data["proton_launch_backend"] = "direct" if str(backend).strip().lower() == "direct" else "umu"
+        self.save()
+
+    @property
+    def umu_executable(self) -> str:
+        return str(self.data.get("umu_executable") or "umu-run").strip() or "umu-run"
 
     def default_gamescope(self) -> GamescopeSettings:
         return GamescopeSettings.from_raw(self.data.get("gamescope_defaults", {}))
@@ -1417,10 +1434,14 @@ class LaunchService:
             proton_exe = self.proton_manager.proton_executable(runtime_tag)
             if proton_exe is None:
                 raise RuntimeError(f"Proton {runtime_tag} is not installed")
-            env["STEAM_COMPAT_DATA_PATH"] = prefix
-            env.setdefault("STEAM_COMPAT_CLIENT_INSTALL_PATH", "/usr")
-            base_command = [str(proton_exe), "run", exe_path] + launch_args
-            runtime_label = f"Proton {runtime_tag}"
+            if self.config.proton_launch_backend == "umu":
+                base_command, runtime_label = self._build_umu_command(
+                    env, exe_path, launch_args, runtime_tag, proton_exe.parent
+                )
+            else:
+                base_command, runtime_label = self._build_direct_proton_command(
+                    env, prefix, exe_path, launch_args, runtime_tag, proton_exe
+                )
         else:
             base_command = ["wine", "start", "/unix", exe_path] + launch_args
             runtime_label = "Wine"
@@ -1452,6 +1473,45 @@ class LaunchService:
             daemon=True,
         ).start()
         return LaunchResult(pid=process.pid, command=command, runtime_label=runtime_label)
+
+    @staticmethod
+    def _game_id(exe_path: str) -> str:
+        digest = hashlib.sha1(exe_path.encode("utf-8")).hexdigest()[:12]
+        return f"umu-wine-manager-{digest}"
+
+    def _build_umu_command(
+        self,
+        env: dict,
+        exe_path: str,
+        launch_args: list[str],
+        runtime_tag: str,
+        proton_path: pathlib.Path,
+    ) -> tuple[list[str], str]:
+        umu_executable = shutil.which(self.config.umu_executable)
+        if umu_executable is None:
+            raise RuntimeError(
+                f"umu-run ({self.config.umu_executable}) was not found. Install umu-launcher "
+                "or switch the Proton launch backend to legacy direct mode in Settings."
+            )
+        env["GAMEID"] = self._game_id(exe_path)
+        env.setdefault("STORE", "none")
+        env["PROTONPATH"] = str(proton_path)
+        command = [umu_executable, exe_path] + launch_args
+        return command, f"Proton {runtime_tag} via umu-run"
+
+    def _build_direct_proton_command(
+        self,
+        env: dict,
+        prefix: str,
+        exe_path: str,
+        launch_args: list[str],
+        runtime_tag: str,
+        proton_exe: pathlib.Path,
+    ) -> tuple[list[str], str]:
+        env["STEAM_COMPAT_DATA_PATH"] = prefix
+        env.setdefault("STEAM_COMPAT_CLIENT_INSTALL_PATH", "/usr")
+        command = [str(proton_exe), "run", exe_path] + launch_args
+        return command, f"Proton {runtime_tag} direct legacy"
 
     def _capture_output(self, process: subprocess.Popen, app_name: str, runtime_label: str) -> None:
         try:

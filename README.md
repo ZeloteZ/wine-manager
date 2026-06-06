@@ -26,7 +26,8 @@ The current version is a redesigned PySide6 application with a compact library v
 
 ![alt text](https://zelotez.cloud/img/eb12ada10c5416b5.png?viewer=0 "Wine Manager - Launch Exe")
 
-## Requirements
+## umu-launcher` (provides `umu-run`) for Proton-GE launches; install it from your distribution or https://github.com/Open-Wine-Components/umu-launcher
+- `Requirements
 
 - Linux
 - Python 3.10 or newer
@@ -65,7 +66,8 @@ Wine Manager searches for prefixes in common locations:
 - `~/.local/share/bottles/data/bottles`
 - `~/.var/app/com.usebottles.bottles/data/bottles`
 
-Additional prefix directories can be added in the app settings. A directory is treated as a Wine prefix when it contains `system.reg`, or when it contains a nested `prefix/system.reg` layout used by some managers.
+Additional preumu-run <exe>` with `WINEPREFIX`, `GAMEID`, `STORE=none`, and `PROTONPATH` pointing to the installed Proton-GE build. This runs Proton inside the Steam-compatible umu runtime, which is the supported way to use GE-Proton outside of Steam.
+- Proton-GE (legacy): `<proton>/proton run <exe>` directly, available as a fallback when the Proton launch backend is set to legacy mode in settingsed in the app settings. A directory is treated as a Wine prefix when it contains `system.reg`, or when it contains a nested `prefix/system.reg` layout used by some managers.
 
 For each prefix, Wine Manager scans `drive_c` for `.exe` files and displays them in one combined library. Launching uses the selected runtime:
 
@@ -148,5 +150,3 @@ Wine Manager does not install Wine itself and does not modify or delete applicat
 
 
 Made with ❤️ for the Linux gaming community
-
-

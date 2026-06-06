@@ -1538,6 +1538,14 @@ class SettingsDialog(QDialog):
         current = self.default_runtime_combo.findData(self.config.default_runtime)
         self.default_runtime_combo.setCurrentIndex(current if current >= 0 else 0)
         runtime_card.body.addWidget(self.default_runtime_combo)
+
+        self.proton_backend_combo = QComboBox()
+        self.proton_backend_combo.addItem("umu-run (recommended)", "umu")
+        self.proton_backend_combo.addItem("Direct Proton (legacy)", "direct")
+        backend_index = self.proton_backend_combo.findData(self.config.proton_launch_backend)
+        self.proton_backend_combo.setCurrentIndex(backend_index if backend_index >= 0 else 0)
+        runtime_card.body.addWidget(QLabel("Proton launch backend"))
+        runtime_card.body.addWidget(self.proton_backend_combo)
         global_top.addWidget(runtime_card, 1)
         global_layout.addLayout(global_top)
 
@@ -1819,6 +1827,7 @@ class SettingsDialog(QDialog):
 
         self.config.data["proton_dir"] = proton_dir
         self.config.data["default_proton"] = self.default_runtime_combo.currentData() or ""
+        self.config.data["proton_launch_backend"] = self.proton_backend_combo.currentData() or "umu"
         self.config.data["gamescope_defaults"] = self.default_gamescope_editor.current_settings().to_config()
         self.config.data["prefix_proton_map"] = dict(self.prefix_overrides)
         self.config.data["prefix_gamescope_map"] = {
