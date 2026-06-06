@@ -1,6 +1,7 @@
-# Wine Manager
+![alt text](https://zelotez.cloud/img/7f735fc6ce4f57aa.png?viewer=0 "Wine Manager")
 
-Wine Manager is a Linux desktop app for launching and organizing Windows applications across multiple Wine prefixes. It scans common prefix locations, builds a unified app library, and lets you choose between system Wine and installed Proton-GE builds per prefix or per app.
+
+Wine Manager is a Linux desktop app for launching and organizing Windows applications across multiple Wine prefixes and Bottles installations. It scans common prefix locations, builds a unified app library, and lets you choose between system Wine and installed Proton-GE builds per prefix or per app.
 
 The current version is a redesigned PySide6 application with a compact library view, Proton management, Gamescope launch profiles, custom artwork, favorites, and built-in logs.
 
@@ -20,6 +21,10 @@ The current version is a redesigned PySide6 application with a compact library v
 - Per-app remove/hide support without deleting files from the prefix
 - Built-in logs for scans, launches, downloads, and service errors
 - Local JSON configuration under the user's config directory
+
+![alt text](https://zelotez.cloud/img/b676eec3044029ba.png?viewer=0 "Wine Manager - Proton Manager")
+
+![alt text](https://zelotez.cloud/img/eb12ada10c5416b5.png?viewer=0 "Wine Manager - Launch Exe")
 
 ## Requirements
 
@@ -95,6 +100,7 @@ You can change the Proton directory from the settings dialog.
 ## Proton-GE
 
 Open the Proton dialog from the header to fetch available GloriousEggroll Proton-GE releases from GitHub. Wine Manager can install and remove builds locally, then use them as launch runtimes globally, per prefix, or per app.
+Everybody loves [Proton-GE](https://github.com/GloriousEggroll/proton-ge-custom).
 
 ## Gamescope
 
@@ -138,3 +144,9 @@ wine_manager/widgets.py
 ## Notes
 
 Wine Manager does not install Wine itself and does not modify or delete applications inside your prefixes when hiding or removing entries from the library. It stores library preferences separately in its own config file.
+
+
+
+Made with ❤️ for the Linux gaming community
+
+
