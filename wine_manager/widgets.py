@@ -274,7 +274,6 @@ class AppCard(QFrame):
         self.setMinimumHeight(148)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         add_shadow(self, blur=18, alpha=24)
-        self._path_text = ""
 
         root = QHBoxLayout(self)
         root.setContentsMargins(18, 18, 18, 18)
@@ -294,18 +293,24 @@ class AppCard(QFrame):
 
         self.title_label = QLabel("App")
         self.title_label.setObjectName("AppCardTitle")
-        self.title_label.setWordWrap(True)
+        self.title_label.setTextFormat(Qt.PlainText)
+        self.title_label.setWordWrap(False)
+        self.title_label.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Fixed)
         info_layout.addWidget(self.title_label)
 
         self.path_label = QLabel("")
         self.path_label.setObjectName("AppCardPath")
+        self.path_label.setTextFormat(Qt.PlainText)
         self.path_label.setWordWrap(False)
         self.path_label.setTextInteractionFlags(Qt.NoTextInteraction)
+        self.path_label.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Fixed)
         info_layout.addWidget(self.path_label)
 
         self.summary_label = QLabel("Generated artwork based on the executable.")
         self.summary_label.setObjectName("AppCardSummary")
-        self.summary_label.setWordWrap(True)
+        self.summary_label.setTextFormat(Qt.PlainText)
+        self.summary_label.setWordWrap(False)
+        self.summary_label.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Fixed)
         info_layout.addWidget(self.summary_label)
 
         root.addLayout(info_layout, 1)
@@ -362,11 +367,6 @@ class AppCard(QFrame):
 
         self._set_art("App")
 
-    def resizeEvent(self, event) -> None:
-        super().resizeEvent(event)
-        metrics = self.path_label.fontMetrics()
-        self.path_label.setText(metrics.elidedText(self._path_text, Qt.ElideMiddle, max(220, self.path_label.width())))
-
     def set_content(
         self,
         title: str,
@@ -384,9 +384,7 @@ class AppCard(QFrame):
         self.meta_chip.setText(meta)
         self.prefix_chip.setText(prefix)
         self.setToolTip(tooltip)
-        self._path_text = tooltip.split("\n", 1)[0]
-        metrics = self.path_label.fontMetrics()
-        self.path_label.setText(metrics.elidedText(self._path_text, Qt.ElideMiddle, max(220, self.path_label.width())))
+        self.path_label.setText(tooltip.split("\n", 1)[0])
         if art_path and is_favorite:
             self.summary_label.setText("Custom artwork is applied and the app is pinned as a favorite.")
         elif art_path:
